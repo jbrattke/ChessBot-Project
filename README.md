@@ -1,2 +1,4 @@
 # ChessBot-Project
-Basic Chess bot
+
+Unfinished at the moment
+Bot rating: ~400?
