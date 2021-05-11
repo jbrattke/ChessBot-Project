@@ -1,0 +1,14 @@
+{
+    "launch": {
+
+        "configurations": [],
+        "compounds": []
+    },
+
+    "python.linting.pylintArgs": [
+        "--extension-pkg-whitelist=pygame",
+        "--disable=C0103",
+        "-d", "C0301",
+        "--errors-only"
+    ]
+}
