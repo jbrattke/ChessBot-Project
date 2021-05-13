@@ -335,7 +335,7 @@ class Board:
 
     def movePiece(self, search, index, posLast, posNew):
         self.pieces[index].pos = posNew
-        self.specialMover(search, index, posLast)
+        self.specialMover(search, index, posLast, False)
         self.clearSquare(search)
         self.addMove(index, posLast)
         self.movecount += 1
@@ -413,10 +413,29 @@ class Board:
             return True
         return False
 
-    def promotePawn(self, index): #DISABLED FOR THE TIME BEING
+    def promotePawn(self, index, genFlag):
         temp = self.pieces[index]
         if (temp.pos[1] == 0 and temp.color == 0) or (temp.pos[1] == 7  and temp.color == 1):
-            self.pieces[index] = Queen(temp.pos, temp.color)
+            if genFlag:
+                self.pieces[index] = Queen(temp.pos, temp.color)
+            else:
+                exit = False
+                print("Q:Knight - W:Bishop - E:Rook - R:Queen")
+                while not exit:
+                    for event in pygame.event.get():
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_q:
+                                self.pieces[index] = Knight(temp.pos, temp.color)
+                                exit = True
+                            elif event.key == pygame.K_w:
+                                self.pieces[index] = Bishop(temp.pos, temp.color)
+                                exit = True
+                            elif event.key == pygame.K_e:
+                                self.pieces[index] = Rook(temp.pos, temp.color)
+                                exit = True
+                            elif event.key == pygame.K_r:
+                                self.pieces[index] = Queen(temp.pos, temp.color)
+                                exit = True
 
     def KingMove(self, search, index, posLast):
         diffx = self.pieces[index].pos[0] - posLast[0]
@@ -443,11 +462,11 @@ class Board:
             else: #QUEEN SIDE
                 return not self.hasPieceMoved(24) and self.findPiece(1, 0) is None
 
-    def specialMover(self, search, index, posLast):
+    def specialMover(self, search, index, posLast, genFlag):
         if isinstance(self.pieces[index],Pawn) and self.enPassant(search, index, posLast):
             self.clearSquare(self.findPiece(self.pieces[index].pos[0], posLast[1]))
         if isinstance(self.pieces[index],Pawn):
-            self.promotePawn(index)
+            self.promotePawn(index, genFlag)
                 
         diffx = self.pieces[index].pos[0] - posLast[0]
         if isinstance(self.pieces[index], King) and self.KingMove(search, index, posLast):
@@ -483,7 +502,7 @@ class Board:
             testerBoard = self.makeBoardCopy()
             testerBoard.pieces[index].pos = posCurrent
             testerBoard.clearSquare(search)
-            testerBoard.specialMover(search, index, posLast)
+            testerBoard.specialMover(search, index, posLast, True)
             if testerBoard.isKingInCheck(testerBoard.movecount % 2):
                 return False
             return True
@@ -551,7 +570,7 @@ class Board:
         tempBoard.clearSquare(search)
         posLast = tempBoard.pieces[index].pos
         tempBoard.pieces[index].pos = posNew
-        tempBoard.specialMover(search, index, posLast)
+        tempBoard.specialMover(search, index, posLast, True)
         return tempBoard.pieces
 
 def evalPos(color, pieces):
@@ -814,8 +833,6 @@ class Game:
 
             depth = d5.sizeAtDepth(5,0)
             print ("Combinations: %s" % depth)
-        elif event.key == pygame.K_e:
-            print("E")
         elif event.key == pygame.K_b:
             bot = Bot(self.board)
             bestMove = bot.MiniMax()
