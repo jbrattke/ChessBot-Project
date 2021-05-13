@@ -1,4 +1,4 @@
 # ChessBot-Project
 
 Unfinished at the moment:
-Bot rating: ~400?
+Bot rating: ~300?
