@@ -658,40 +658,42 @@ class BoardTree:
                 size += self.nodes[i].sizeAtDepth(depth, acc+1)
             return size
 
-    def minSearch(self, depth, color):
+    def minSearch(self, depth, color, alpha, beta):
         if depth == 0:
             return (-self.value, [])
         
-        minVal = math.inf
         bestMove = []
         for board in self.nodes:
-            score = board.maxSearch(depth - 1, (color + 1) % 2)
-            if score[0] < minVal:
-                minVal = score[0]
-                bestMove = board.value
-        return (minVal, bestMove)
+            score = board.maxSearch(depth - 1, (color + 1) % 2, alpha, beta)
+            if score[0] <= alpha:
+                return (alpha, board.pieces)
+            if score[0] < beta:
+                beta = score[0]
+                bestMove = board.pieces
+        return (beta, bestMove)
 
-    def maxSearch(self, depth, color):
+    def maxSearch(self, depth, color, alpha, beta):
         if depth == 0:
             return (self.value, [])
         
-        maxVal = -math.inf
         bestMove = []
         for board in self.nodes:
-            score = board.minSearch(depth - 1, (color + 1) % 2)
-            if score[0] > maxVal:
-                maxVal = score[0]
+            score = board.minSearch(depth - 1, (color + 1) % 2, alpha, beta)
+            if score[0] >= beta:
+                return (beta, board.pieces)
+            if score[0] > alpha:
+                alpha = score[0]
                 bestMove = board.pieces
-        return (maxVal, bestMove)
+        return (alpha, bestMove)
 
 class EndGame:
     def __init__(self, pieces):
         self.pieces = pieces
     def sizeAtDepth(self, depth, acc):
         return 1
-    def minSearch(self, depth, color):
+    def minSearch(self, depth, color, alpha, beta):
         return (-math.inf, self.pieces)
-    def maxSearch(self, depth, color):
+    def maxSearch(self, depth, color, alpha, beta):
         return (math.inf, self.pieces)
 
 class Leaf:
@@ -699,9 +701,9 @@ class Leaf:
         self.value = None
     def sizeAtDepth(self, depth, acc):
         return 0
-    def minSearch(self, depth, color):
+    def minSearch(self, depth, color, alpha, beta):
         return (-math.inf, [])
-    def maxSearch(self, depth, color):
+    def maxSearch(self, depth, color, alpha, beta):
         return (math.inf, [])
 
 class Bot:
@@ -728,8 +730,7 @@ class Bot:
                 return BoardTree(evalPos(color, pieces), pieces, nodes)
             # return BoardTree(0, [], nodes) #For testing with less memory use
         else:
-            for i in range(16):
-                nodes.append(Leaf())
+            nodes.append(Leaf())
             return BoardTree(evalPos(color, pieces), pieces, nodes)
             # return BoardTree(0, [], nodes) #For testing with less memory use
 
@@ -847,8 +848,8 @@ class Game:
         elif event.key == pygame.K_m:
             bot = Bot(self.board)
             start = time.perf_counter()
-            d2 = bot.initBoardTree(self.board.pieces, 2, self.board.movecount % 2)
-            bestMove = d2.maxSearch(2, self.board.movecount % 2)
+            d2 = bot.initBoardTree(self.board.pieces, 3, self.board.movecount % 2)
+            bestMove = d2.maxSearch(3, self.board.movecount % 2, -math.inf, math.inf)
             end = time.perf_counter()
             print("Time: %s s" % (end - start))
             self.board.pieces = bestMove[1]
