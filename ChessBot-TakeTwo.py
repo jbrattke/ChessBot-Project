@@ -4,6 +4,7 @@ import random
 import copy
 import time
 import math
+from typing import Union, Type
 
 #pygame.mixer.pre_init(44100, 16, 2, 4096) #frequency, size, channels, buffersize
 pygame.init()
@@ -35,22 +36,22 @@ moveSound.set_volume(0)
 
 #------------PIECE CLASSES------------
 class Piece:
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: pygame.Color):
         self.pos = pos
         self.color = color
 
 class Pawn(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.val = 100
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(PawnW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(PawnB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         output = []
         if self.color == 0:
             output.append((self.pos[0], self.pos[1]-1))
@@ -67,17 +68,17 @@ class Pawn(Piece):
         return output
 
 class Bishop(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.val = 300
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(BishopW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(BishopB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         output = []
         xacc = self.pos[0]
         yacc1 = self.pos[1]
@@ -108,17 +109,17 @@ class Bishop(Piece):
         return output
 
 class Knight(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.val = 300
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(KnightW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(KnightB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         output = []
         output.append((self.pos[0]-1, self.pos[1]+2))
         output.append((self.pos[0]+1, self.pos[1]+2))
@@ -131,17 +132,17 @@ class Knight(Piece):
         return output
 
 class Rook(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.val = 500
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(RookW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(RookB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         output = []
         for i in range(8):
             output.append((self.pos[0], i))
@@ -151,43 +152,43 @@ class Rook(Piece):
         return output
 
 class Queen(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.val = 900
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(QueenW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(QueenB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         diagMoves = Bishop(self.pos, self.color).genMoves()
         straightMoves = Rook(self.pos, self.color).genMoves()
         output = diagMoves + straightMoves
         return output
 
 class King(Piece):
-    def __init__(self, pos, color):
+    def __init__(self, pos: list, color: int):
         super().__init__(pos, color)
         self.kingSide = True
         self.queenSide = True
         self.val = 100000 #arbitarily large number(could be positive infinity?)
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface) -> pygame.Surface:
         if self.color == 0:
             win.blit(KingW, (self.pos[0] * 100, self.pos[1] * 100))
         else:
             win.blit(KingB, (self.pos[0] * 100, self.pos[1] * 100))
 
-    def valid(self, posLast):
+    def valid(self, posLast: list) -> bool:
         output = True
         diffx = self.pos[0] - posLast[0]
         diffy = self.pos[1] - posLast[1]
 
         return ((-1 <= diffy <= 0) or (0 <= diffy <= 1)) and ((0 >= diffx >= -2) or (2 >= diffx >= 0))
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         output = []
         output.append((self.pos[0], self.pos[1]+1))
         output.append((self.pos[0]+1, self.pos[1]+1))
@@ -207,15 +208,15 @@ class emptyPiece():
         self.color = -1
         self.val = 0
 
-    def draw(self,win):
-        return 0
+    def draw(self,win: pygame.Surface) -> pygame.Surface:
+        return win
 
-    def genMoves(self):
+    def genMoves(self) -> list:
         return []
 
 #---------- GAME/BOARD CLASSES -----------
 #Bresenham's line algorithm
-def line(x0, y0, x1, y1):
+def line(x0: int, y0: int, x1: int, y1: int) -> list:
     points_in_line = []
     dx = abs(x1 - x0)
     dy = abs(y1 - y0)
@@ -244,12 +245,12 @@ def line(x0, y0, x1, y1):
     return points_in_line
 
 class Move:
-    def __init__(self, pieceIndex, posLast, posNew):
+    def __init__(self, pieceIndex: int, posLast: list, posNew: list):
         self.pieceIndex = pieceIndex
         self.posLast = posLast
         self.posNew = posNew
 
-    def moveBack(self, board):
+    def moveBack(self, board: list):
         board.pieces[self.pieceIndex].pos = self.posLast
 
 #BOARD CLASS
@@ -258,7 +259,7 @@ class Board:
     brown = pygame.Color('0xDCD3EA')
     beige = pygame.Color('0xF5F5F5')
 
-    def __init__(self, win):
+    def __init__(self, win: pygame.Surface):
         self.win = win
         self.pieces = []
         self.moves = []
@@ -266,23 +267,26 @@ class Board:
         self.checkmate = False
 
     # -------------- DRAW METHODS----------------
+    #draws blank chess board
     def initBoard(self):
-        #draws board using nested for loops
         for i in range(0,8):
             for j in range(0,8):
                 color = (self.beige, self.brown)[(i + j) % 2 == 1]
                 pygame.draw.rect(self.win, color, (i * self.scale, j * self.scale, self.scale, self.scale))
 
+    #draws board withg pieces
     def drawBoard(self):
         for i in range(0, len(self.pieces)):
             self.pieces[i].draw(self.win)
 
-    def drawGen(self, index, posLast):
-        genLegalMoves = self.genPieceLegalMoves(index, posLast)#moveGenerator.genPiecePseudoMoves(index, posLast)
+    #draws all possible moves on self.win
+    def drawGen(self, index: int, posLast: list):
+        genLegalMoves = self.genPieceLegalMoves(index, posLast)
         for i in range(len(genLegalMoves)):
             pygame.draw.rect(self.win, pygame.Color('0xFF6482'), (genLegalMoves[i][0] * self.scale, genLegalMoves[i][1] * self.scale, self.scale, self.scale))
     
-    def drawLegalMoves(self, moves):
+    #draws all moves in input 'moves' list
+    def drawLegalMoves(self, moves: list):
         for i in range(len(moves)):
             pygame.draw.rect(self.win, pygame.Color('0xFF6482'), (moves[i][0] * self.scale, moves[i][1] * self.scale, self.scale, self.scale))
 
@@ -311,29 +315,29 @@ class Board:
         self.pieces.append(Queen((3,0), 1)) #30
         self.pieces.append(King((4,0), 1)) #31
 
-    def addMove(self, index, posLast):
+    def addMove(self, index: int, posLast: list):
         self.moves.append(Move(index, posLast, self.pieces[index].pos))
 
     def lastMove(self):
         self.moves[len(self.moves) - 1].moveBack(self)
         self.moves.pop(len(self.moves) - 1)
 
-    def findPiece(self, posx, posy):
+    def findPiece(self, posx: int, posy: int) -> int:
         for i in range(0, len(self.pieces)):
             if not isinstance(self.pieces[i], emptyPiece) and self.pieces[i].pos[0] == posx and self.pieces[i].pos[1] == posy:
                 return i
 
-    def clearSquare(self, search):
+    def clearSquare(self, search: int):
         if search is not None:
             self.pieces[search] = emptyPiece()
 
-    def hasPieceMoved(self, index): 
+    def hasPieceMoved(self, index: int) -> bool: 
         output = False
         for i in range(1,len(self.moves) - 1):
             output = self.moves[i].pieceIndex == index or output
         return output 
 
-    def movePiece(self, search, index, posLast, posNew):
+    def movePiece(self, search: int, index: int, posLast: list, posNew: list):
         self.pieces[index].pos = posNew
         self.specialMover(search, index, posLast, False)
         self.clearSquare(search)
@@ -351,7 +355,7 @@ class Board:
         return output
 
     #--------PSEUDO VALID MOVE CHECK METHODS-----------------
-    def isMovePseudoValid(self, search, index, posLast):
+    def isMovePseudoValid(self, search: int, index: int, posLast: list) -> bool:
         output = True
 
         if search is not None:
@@ -369,7 +373,7 @@ class Board:
 
         return output
     
-    def hopStop(self, index, posLast):
+    def hopStop(self, index: int, posLast: list) -> bool:
         if isinstance(self.pieces[index], Knight):
             return True
 
@@ -381,7 +385,7 @@ class Board:
                 return False
         return True
 
-    def enPassant(self, search, index, posLast):
+    def enPassant(self, search: int, index: int, posLast: list) -> bool:
         diffx = self.pieces[index].pos[0] - posLast[0]
         diffy = self.pieces[index].pos[1] - posLast[1]
         xOffset = (diffx == -1 or diffx == 1)
@@ -396,7 +400,7 @@ class Board:
         possible = search is None and isPawn and xOffset and doublePawnPush
         return possible
 
-    def pawnTake(self, search, index, posLast):
+    def pawnTake(self, search: int, index: int, posLast: list) -> bool:
         if self.enPassant(search, index, posLast):
             return True
         diffx = self.pieces[index].pos[0] - posLast[0]
@@ -406,14 +410,14 @@ class Board:
         else:
             return not (diffx == -1 or diffx == 1)
 
-    def doublePawnPush(self, index):
+    def doublePawnPush(self, index: int) -> bool:
         if self.pieces[index].pos[1] == 6 and self.pieces[index].color ==  0:
             return True
         elif self.pieces[index].pos[1] == 1 and self.pieces[index].color ==  1:
             return True
         return False
 
-    def promotePawn(self, index, genFlag):
+    def promotePawn(self, index: int, genFlag: bool) -> Union[bool, None]:
         temp = self.pieces[index]
         if (temp.pos[1] == 0 and temp.color == 0) or (temp.pos[1] == 7  and temp.color == 1):
             if genFlag:
@@ -437,7 +441,7 @@ class Board:
                                 self.pieces[index] = Queen(temp.pos, temp.color)
                                 exit = True
 
-    def KingMove(self, search, index, posLast):
+    def KingMove(self, search: int, index: int, posLast: list) -> bool:
         diffx = self.pieces[index].pos[0] - posLast[0]
         diffy = self.pieces[index].pos[1] - posLast[1]
 
@@ -448,8 +452,8 @@ class Board:
             return True
         return False
 
-    def Castling(self, index, posLast, diffx):
-        if self.hasPieceMoved(index):
+    def Castling(self, index: int, posLast: list, diffx: int) -> bool:
+        if self.hasPieceMoved(index) or isinstance(self.pieces[i], emptyPiece):
             return False
         if self.pieces[index].color == 0: #white
             if diffx == 2: #KING SIDE
@@ -462,7 +466,7 @@ class Board:
             else: #QUEEN SIDE
                 return not self.hasPieceMoved(24) and self.findPiece(1, 0) is None
 
-    def specialMover(self, search, index, posLast, genFlag):
+    def specialMover(self, search: int, index: int, posLast: list, genFlag: bool) -> Union[bool, None]:
         if isinstance(self.pieces[index],Pawn) and self.enPassant(search, index, posLast):
             self.clearSquare(self.findPiece(self.pieces[index].pos[0], posLast[1]))
         if isinstance(self.pieces[index],Pawn):
@@ -480,7 +484,7 @@ class Board:
                 self.pieces[24].pos = (3,0)
 
     #------------ CHECK METHODS ---------------
-    def isKingInCheck(self, color):
+    def isKingInCheck(self, color: int) -> bool:
         pseudoLegalMoves = self.genColorPseudoMoves((color + 1) % 2)
         kingIndex = 15 if color == 0 else 31
 
@@ -489,13 +493,13 @@ class Board:
                 return True
         return False
 
-    def isCheckmate(self, color):
+    def isCheckmate(self, color: int) -> bool:
         if self.isKingInCheck(color):
             return len(self.genColorLegalMoves(color)) == 0
         return False
 
     #------------ LEGAL MOVE CHECK METHODS ------------------
-    def isLegalMove(self, index, search, posLast, posCurrent):
+    def isLegalMove(self, index: int, search: int, posLast: list, posCurrent: list) -> bool:
         piecePseudoMoves = self.genPiecePseudoMoves(index, posLast)
 
         if posCurrent in piecePseudoMoves and posCurrent is not posLast:
@@ -509,16 +513,16 @@ class Board:
         return False
     
     #------------ MOVE GENERATION METHODS ------------------
-    def genPieceAllMoves(self, index, pos):
+    def genPieceAllMoves(self, index: int, pos: list) -> list:
         temp = self.pieces[index]
         temp.pos = pos
         output = self.pieces[index].genMoves()
         return output
     
-    def genPiecePseudoMoves(self, index, pos):
+    def genPiecePseudoMoves(self, index: int, pos: list) -> list:
         return self.makeGenValid(self.genPieceAllMoves(index, pos), index, pos)
 
-    def makeGenValid(self, moves, index, pos):
+    def makeGenValid(self, moves: list, index: int, pos: list) -> list:
         output = []
         for i in range(len(moves)):
             search = self.findPiece(moves[i][0], moves[i][1])
@@ -528,7 +532,7 @@ class Board:
             self.pieces[index].pos = pos
         return output
 
-    def genPieceLegalMoves(self, index, pos):
+    def genPieceLegalMoves(self, index: int, pos: list) -> list:
         pseudo = self.genPiecePseudoMoves(index, pos)
         output = []
         for i in range(len(pseudo)):
@@ -536,21 +540,21 @@ class Board:
                 output.append(pseudo[i])
         return output
 
-    def genColorPseudoMoves(self, color):
+    def genColorPseudoMoves(self, color: int):
         inc = 0 if color == 0 else 16
         output = []
         for i in range(0,15):
             output = self.genPiecePseudoMoves(i+inc, self.pieces[i+inc].pos) + output
         return output
 
-    def genColorLegalMoves(self, color):
+    def genColorLegalMoves(self, color: int):
         inc = 0 if color == 0 else 16
         output = []
         for i in range(16):
             output.append(self.genPieceLegalMoves(i+inc, self.pieces[i+inc].pos))
         return output
 
-    def genCheckSquares(self):
+    def genCheckSquares(self) -> list:
         king = self.pieces[29] if self.movecount % 2 == 0 else self.pieces[31]
         tempKnight = Knight(king.pos, king.color)
         tempQueen = Queen(king.pos, king.color)
@@ -562,7 +566,7 @@ class Board:
         return output
 
     #----------- EVALUATE METHODS ---------------
-    def makePos(self, index, posNew):
+    def makePos(self, index: int, posNew: list) -> list:
         tempBoard = self.makeBoardCopy()
 
 
@@ -573,19 +577,27 @@ class Board:
         tempBoard.specialMover(search, index, posLast, True)
         return tempBoard.pieces
 
-def evalPos(color, pieces):
+    def evalPos(self, color: int, pieces: list) -> int:
+        temp = self.makeBoardCopy()
+        temp.pieces = pieces
+        if temp.isCheckmate((color + 1) % 2):
+            return math.inf
+
         inc = 0 if color == 0 else 16
         selfValue = 0
-        otherValue = 0
+        oppValue = 0
+        otherVal = 0
         for piece in pieces:
             if piece.color == color:
                 selfValue += piece.val
             else:
-                otherValue += piece.val
-        return selfValue - otherValue
+                oppValue += piece.val
+        if temp.isKingInCheck((color + 1) % 2):
+            otherVal += 100
+        return selfValue - oppValue + otherVal
 
 #FOR CONVERTING FENS STRING TO BOARD DATA STRUCTURE
-def fenToPieces(fen):
+def fenToPieces(fen: str) -> list:
     fenArr = fen.split("/")
     pieceArr = [emptyPiece()] * 32
     pieceStr = "PRNBQKprnbqk"
@@ -634,19 +646,25 @@ def fenToPieces(fen):
         lastNum = 0
     return pieceArr
 
-def findInList(elem, color, lst):
+def findInList(elem: Piece, color: int, lst: list):
     for item in lst:
         if isinstance(elem, item) and item.color == color:
             return item
     return emptyPiece()
 
+def findMove(orig: list, new: list) -> list:
+    for i in range(31):
+        if orig[i].pos != new[i].pos:
+            return (i, orig[i].pos, new[i].pos)
+    return (-1,-1,-1)
+
 class BoardTree:
-    def __init__(self, value, pieces, nodes):
-        self.value = value
+    def __init__(self, board: Board, pieces: list, nodes: list):
+        self.board = board
         self.pieces = pieces
         self.nodes = nodes
 
-    def sizeAtDepth(self, depth, acc):
+    def sizeAtDepth(self, depth: int, acc: int):
         if depth == 0:
             return 1
 
@@ -658,9 +676,9 @@ class BoardTree:
                 size += self.nodes[i].sizeAtDepth(depth, acc+1)
             return size
 
-    def minSearch(self, depth, color, alpha, beta):
+    def minSearch(self, depth: int, color: int, alpha: int, beta: int):
         if depth == 0:
-            return (-self.value, [])
+            return (-self.board.evalPos(color, self.pieces), [])
         
         bestMove = []
         for board in self.nodes:
@@ -672,9 +690,9 @@ class BoardTree:
                 bestMove = board.pieces
         return (beta, bestMove)
 
-    def maxSearch(self, depth, color, alpha, beta):
+    def maxSearch(self, depth: int, color: int, alpha: int, beta: int):
         if depth == 0:
-            return (self.value, [])
+            return (self.board.evalPos(color, self.pieces), [])
         
         bestMove = []
         for board in self.nodes:
@@ -686,33 +704,50 @@ class BoardTree:
                 bestMove = board.pieces
         return (alpha, bestMove)
 
+    def printTree(self, depth, acc):
+        color = (self.board.movecount + acc) % 2
+        print("Depth: %s, Type: %s, Eval: %s" % (acc, type(self),self.board.evalPos(color, self.pieces)))
+
+        if acc < depth:
+            for i in range(len(self.nodes)):
+                self.nodes[i].printTree(depth, acc + 1)
+
 class EndGame:
-    def __init__(self, pieces):
+    def __init__(self, pieces: list):
         self.pieces = pieces
-    def sizeAtDepth(self, depth, acc):
+    def sizeAtDepth(self, depth: int, acc: int):
         return 1
-    def minSearch(self, depth, color, alpha, beta):
+    def minSearch(self, depth: int, color: int, alpha: int, beta: int):
         return (-math.inf, self.pieces)
-    def maxSearch(self, depth, color, alpha, beta):
+    def maxSearch(self, depth: int, color: int, alpha: int, beta: int):
         return (math.inf, self.pieces)
+    def printTree(self, depth, acc):
+        print("Depth: %s, Type: %s, Eval: %s" % (acc, type(self), math.inf))
 
 class Leaf:
     def __init__(self):
         self.value = None
-    def sizeAtDepth(self, depth, acc):
+    def sizeAtDepth(self, depth: int, acc: int):
         return 0
-    def minSearch(self, depth, color, alpha, beta):
+    def minSearch(self, depth: int, color: int, alpha: int, beta: int):
         return (-math.inf, [])
-    def maxSearch(self, depth, color, alpha, beta):
+    def maxSearch(self, depth: int, color: int, alpha: int, beta: int):
         return (math.inf, [])
+    def printTree(self, depth, acc):
+        color = (self.board.movecount + acc) % 2
+        print("Depth: %s, Type: %s, Eval: %s" % (acc, type(self), -1))
+
+        if acc < depth:
+            for i in range(len(self.nodes)):
+                self.nodes[i].printTree(depth, acc + 1)
 
 class Bot:
-    def __init__(self, board):
+    def __init__(self, board: Board):
         self.board = board.makeBoardCopy()
 
         self.evalTree = Leaf()
 
-    def initBoardTree(self, pieces, depth, color):
+    def initBoardTree(self, pieces: list, depth: int, color: int):
         inc = 0 if color == 0 else 16
         nodes = []
         if depth > 0:
@@ -724,29 +759,35 @@ class Bot:
                     for j in range(len(moves[i])):
                         newBoard = temp.makePos(i+inc, moves[i][j])
                         nodes.append(self.initBoardTree(newBoard, depth - 1, (color + 1) % 2))
-            if not nodes:
+            if len(nodes) == 0:
                 return EndGame(pieces)
             else:
-                return BoardTree(evalPos(color, pieces), pieces, nodes)
-            # return BoardTree(0, [], nodes) #For testing with less memory use
+                return BoardTree(temp, pieces, nodes)
+                # return BoardTree(0, [], nodes) #For testing with less memory use
         else:
             nodes.append(Leaf())
-            return BoardTree(evalPos(color, pieces), pieces, nodes)
+            return BoardTree(self.board, pieces, nodes)
             # return BoardTree(0, [], nodes) #For testing with less memory use
 
-    def endGame(self, moves):
+    def endGame(self, moves: list):
         output = True
         for move in moves:
             output = output and (len(move) == 0)
         return output
 
-    def MiniMax(self):
-        
-        print ("Move Found")
+    def MiniMax(self, depth: int) -> list:
+        start = time.perf_counter()
+
+        tree = self.initBoardTree(self.board.pieces, depth, self.board.movecount % 2)
+        bestMove = tree.maxSearch(depth, self.board.movecount % 2, -math.inf, math.inf)
+
+        end = time.perf_counter()
+
+        print("Time: %s s" % (end - start))
         return bestMove
 
 class Game:
-    def __init__(self, win):
+    def __init__(self, win: pygame.Surface):
         self.win = win
         self.clicked = False
         self.exit = False
@@ -757,7 +798,7 @@ class Game:
         self.board.initPieces()
         self.board.moves.append(self.board.pieces)
 
-        self.tree = None
+        self.bot = Bot(self.board)
 
     def run(self):
         index = None
@@ -778,9 +819,14 @@ class Game:
                     posLast = click[1]
             self.onTick(index, posLast, pos)
 
-    def keyHandler(self, event):
+    def keyHandler(self, event: pygame.event) -> None:
         if event.key == pygame.K_SPACE:
-            self.exit = True
+            bot = Bot(self.board)
+            bestMove = bot.MiniMax(2)
+            move = findMove(self.board.pieces, bestMove[1])
+            self.board.pieces = bestMove[1]
+            self.board.movecount += 1
+            self.board.moves.append(Move(move[0], move[1], move[2]))
         elif event.key == pygame.K_LEFT:
             if len(self.board.moves) > 1:
                 self.board.lastMove()
@@ -836,7 +882,7 @@ class Game:
             print ("Combinations: %s" % depth)
         elif event.key == pygame.K_b:
             bot = Bot(self.board)
-            bestMove = bot.MiniMax()
+            bestMove = bot.MiniMax(2)
             self.board.pieces = bestMove
             self.board.movecount += 1 
         elif event.key == pygame.K_r:
@@ -845,32 +891,33 @@ class Game:
             self.board.moves = []
             self.board.movecount = 0
             self.board.moves.append(self.board.pieces)
-        elif event.key == pygame.K_m:
-            bot = Bot(self.board)
-            start = time.perf_counter()
-            d2 = bot.initBoardTree(self.board.pieces, 3, self.board.movecount % 2)
-            bestMove = d2.maxSearch(3, self.board.movecount % 2, -math.inf, math.inf)
-            end = time.perf_counter()
-            print("Time: %s s" % (end - start))
-            self.board.pieces = bestMove[1]
-            self.board.movecount += 1
+        elif event.key == pygame.K_ESCAPE:
+            self.exit = True
         elif event.key == pygame.K_f:
             pieceArr = fenToPieces("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8")
             self.board.pieces = pieceArr
-        elif event.key == pygame.K_c:
+        elif event.key == pygame.K_p:
             bot = Bot(self.board)
-            print(bot.endGame(self.board.genColorLegalMoves(self.board.movecount % 2)))
+            tree = bot.initBoardTree(bot.board.pieces, 2, bot.board.movecount % 2)
+            tree.printTree(2, 0)
+        elif event.key == pygame.K_o:
+            output = self.board.genColorLegalMoves(self.board.movecount % 2)
+            total = 0
+            for i in range(16):
+                total += len(output[i])
+            print(total)
         elif event.key == pygame.K_RETURN:
             output = self.board.genColorLegalMoves(self.board.movecount % 2)
             print(output)
 
-    def mouseHandler(self, index, posLast, posx, posy):
+    def mouseHandler(self, index: int, posLast: list, posx: int, posy: int) -> list:
         if self.clicked:
             search = self.board.findPiece(posx, posy)
 
             if self.board.isLegalMove(index, search, posLast, (posx, posy)):
                 self.board.movePiece(search, index, posLast, (posx, posy))
-                self.clicked = False                  
+                self.clicked = False
+
             else: #moves piece back to posLast if piece move not valid
                 self.board.pieces[index].pos = posLast
                 self.clicked = False
@@ -880,9 +927,10 @@ class Game:
                 posLast = self.board.pieces[index].pos
                 self.genMoves = self.board.genPieceLegalMoves(index, posLast)
                 self.clicked = True
+
         return (index, posLast)
 
-    def onTick(self, index, posLast, mousePos):
+    def onTick(self, index: int, posLast: list, mousePos: list) -> None:
         self.board.initBoard()
         if self.clicked:
             self.board.drawLegalMoves(self.genMoves)
@@ -897,8 +945,6 @@ def main():
     pygame.display.set_caption("Chess")
     chessGame = Game(win)
     chessGame.run()
-
-    # For testing
 
 
 main()
