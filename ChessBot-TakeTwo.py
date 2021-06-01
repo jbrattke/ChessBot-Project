@@ -453,7 +453,7 @@ class Board:
         return False
 
     def Castling(self, index: int, posLast: list, diffx: int) -> bool:
-        if self.hasPieceMoved(index) or isinstance(self.pieces[i], emptyPiece):
+        if self.hasPieceMoved(index) or isinstance(self.pieces[index], emptyPiece):
             return False
         if self.pieces[index].color == 0: #white
             if diffx == 2: #KING SIDE
@@ -592,9 +592,59 @@ class Board:
                 selfValue += piece.val
             else:
                 oppValue += piece.val
+            otherVal += self.evalPiecePos(piece)
+        
         if temp.isKingInCheck((color + 1) % 2):
             otherVal += 100
-        return selfValue - oppValue + otherVal
+        
+        return (selfValue - oppValue) + otherVal
+
+    def evalPiecePos(self, piece: Piece) -> int:
+        if isinstance(piece, Pawn):
+            return self.evalPawnPos(piece)
+        elif isinstance(piece, Knight):
+            return self.evalKnightPos(piece)
+        elif isinstance(piece, Bishop):
+            return self.evalBishopPos(piece)
+        elif isinstance(piece, Rook):
+            return self.evalRookPos(piece)
+        elif isinstance(piece, King):
+            return self.evalKingPos(piece)
+        else:
+            return 0
+
+    def evalPawnPos(self, piece: Piece) -> int:
+        if piece.pos in ((3,3), (3,4), (4,3), (4,4)):
+            return 75
+        elif piece.pos in ((1,2), (1,5), (6,1), (6,5)):
+            return 25
+        return 0
+
+    def evalKnightPos(self, piece: Piece) -> int:
+        if piece.pos in ((3,3), (3,4), (4,3), (4,4)):
+            return 50
+        elif piece.pos in ((2,5), (5,5), (2,2), (5,2)):
+            return 25
+        return 0
+    
+    def evalBishopPos(self, piece: Piece) -> int:
+        if piece.pos in ((1,1), (1,6), (6,6), (6,1)):
+            return 50
+        elif piece.pos in ((1,2), (1,5), (6,1), (6,5), (2,3), (2,4), (5,3), (5,4)):
+            return 25
+        return 0
+
+    def evalRookPos(self, piece: Piece) -> int:
+        if piece.pos in ((3,7), (4,7), (3,0), (4,0)):
+            return 75
+        elif piece.pos in ((3,6), (4,6), (3,1), (4,1), (2,7), (5,7), (2,0), (5,0)):
+            return 50
+        return 0
+
+    def evalKingPos(self, piece: Piece) -> int:
+        if piece.pos in ((0,7), (1,7), (6,7), (7,7), (0,0), (1,0), (6,0), (7,0)):
+            return 100
+        return 0
 
 #FOR CONVERTING FENS STRING TO BOARD DATA STRUCTURE
 def fenToPieces(fen: str) -> list:
